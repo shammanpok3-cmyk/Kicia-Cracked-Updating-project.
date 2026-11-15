@@ -1,6 +1,20 @@
 -- Put this file in your executor autoexec folder.
 if not game:IsLoaded() then game.Loaded:Wait() end
-task.wait(5)
+
+-- Wait for the local client character to be spawned and alive; no fixed startup delay.
+local function waitForLiveClient()
+    local players = game:GetService("Players")
+    while true do
+        local player = players.LocalPlayer
+        local character = player and player.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if humanoid and humanoid.Health > 0 then
+            return player
+        end
+        task.wait(0.1)
+    end
+end
+waitForLiveClient()
 
 if getgenv().KiciaRebuild and getgenv().KiciaRebuild.Unload then
     pcall(getgenv().KiciaRebuild.Unload)
