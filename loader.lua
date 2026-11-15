@@ -67081,45 +67081,47 @@ if not _ctrl then
 warn("[Kicia] ABORTED: PlayerScripts.Controllers not found. This script is built for Rivals - remove it from autoexec if you are in a different game.")
 return
 end
--- (no spawn gate: boot ASAP once data is ready)
--- Adaptive fast boot: NO require() calls before boot (hands off the game's
--- enum build). Boot as soon as the client looks alive: spawned + game HUD
--- present. Usually seconds after join; 45s cap, then boot anyway.
-print("[Kicia] waiting for client to come alive ...")
+-- Wait for the loading screen to clear, then let the client settle before
+-- requiring its modules. The earlier GUI/character check is only a heuristic;
+-- retain its 45-second fallback for lobbies without a spawned character.
+print("[Kicia] waiting for client loading and 30 seconds of stability ...")
 local _wt1 = os.clock()
-while os.clock() - _wt1 < 45 do
-local _ch = _lp.Character
-local _pg0 = _lp:FindFirstChild("PlayerGui")
-local _spawnedOk = _ch ~= nil and _ch:FindFirstChildOfClass("Humanoid") ~= nil
-local _uiOk = false
-if _pg0 then
-local _n = 0
-for _, _c in ipairs(_pg0:GetChildren()) do
-if _c:IsA("ScreenGui") then _n = _n + 1 end
-end
-_uiOk = _n >= 2
-end
-if _spawnedOk and _uiOk then break end
-task.wait(1)
+local _readySince = nil
+local _nextWaitLog = _wt1 + 30
+while not K.destroyed do
+    local _now = os.clock()
+    local _ch = _lp.Character
+    local _pg0 = _lp:FindFirstChild("PlayerGui")
+    local _spawnedOk = _ch ~= nil and _ch:FindFirstChildOfClass("Humanoid") ~= nil
+    local _uiOk, _loading = false, false
+    if _pg0 then
+        local _n = 0
+        for _, _c in ipairs(_pg0:GetChildren()) do
+            if _c:IsA("ScreenGui") then _n = _n + 1 end
+        end
+        _uiOk = _n >= 2
+        local _ls = _pg0:FindFirstChild("LoadingScreen")
+        _loading = _ls ~= nil and _ls:IsA("LayerCollector") and _ls.Enabled
+    end
+    local _clientReady = _pg0 ~= nil and not _loading
+        and ((_spawnedOk and _uiOk) or _now - _wt1 >= 45)
+    if _clientReady then
+        _readySince = _readySince or _now
+        if _now - _readySince >= 30 then break end
+    else
+        _readySince = nil
+    end
+    if _now >= _nextWaitLog then
+        print("[Kicia] still waiting for the client to finish loading ...")
+        _nextWaitLog = _now + 30
+    end
+    task.wait(1)
 end
 if K.destroyed then return end
-if os.clock() - _wt1 >= 45 then
-warn("[Kicia] Client readiness timed out; attempting startup anyway")
-else
-print("[Kicia] client alive, booting ...")
-end
+print("[Kicia] client settled, booting ...")
 print("[Kicia] controllers ready, booting ...")
 print("[FIX] auto-exec/color picker by skidcoded")
 tbl17.j1()(bootFn())
-task.spawn(function()
-task.wait(60)
-local _pg3 = _lp:FindFirstChild("PlayerGui")
-local _ls = _pg3 and _pg3:FindFirstChild("LoadingScreen")
-if _ls and _ls:IsA("LayerCollector") and _ls.Enabled then
-print("[Kicia] please rejoin it broke lolz.")
-_ls.Enabled = false
-end
-end)
 end)
 if not ok then
     warn("[Kicia] Startup failed: " .. tostring(err))
