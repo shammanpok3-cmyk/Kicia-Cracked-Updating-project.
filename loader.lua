@@ -1,11 +1,25 @@
 if getgenv().KiciaRebuild and getgenv().KiciaRebuild.Unload then
     pcall(getgenv().KiciaRebuild.Unload)
 end
-if not game:IsLoaded() then game.Loaded:Wait() end
-print("[Kicia] script file executing, PlaceId=" .. tostring(game.PlaceId))
-
 local K: { [string]: any } = { connections = {}, cleanups = {}, destroyed = false }
 getgenv().KiciaRebuild = K
+
+-- Claim this execution before waiting: another execution can cancel it while
+-- Roblox is still loading, instead of allowing two bootstraps to race.
+function K.Unload()
+    if K.destroyed then return end
+    K.destroyed = true
+    if K.startupThread and K.startupThread ~= coroutine.running() then
+        pcall(task.cancel, K.startupThread)
+    end
+    for _, f in ipairs(K.cleanups) do pcall(f) end
+    if K.GlobalTrove then pcall(function() K.GlobalTrove:Destroy() end) end
+    if getgenv().KiciaRebuild == K then getgenv().KiciaRebuild = nil end
+end
+
+if not game:IsLoaded() then game.Loaded:Wait() end
+if K.destroyed then return end
+print("[Kicia] script file executing, PlaceId=" .. tostring(game.PlaceId))
 
 local Players = game:GetService("Players")
 local _ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17848,30 +17862,46 @@ end
 return { Page = v120, Grid = v121 }
 end
 
-local function KiciaQueueTeleport()
-    local qf = K.fn("queue_on_teleport") or K.fn("queueonteleport")
-    if type(qf) ~= "function" then return end
-    local best, bestLen = nil, -1
-    for level = 0, 40 do
-        local ok, info = pcall(debug.getinfo, level, "S")
-        if not ok or type(info) ~= "table" then break end
-        local s = info.source or info.short_src or ""
-        if type(s) == "string" and s:sub(1, 1) == "@" then
-            local ok2, content = pcall(readfile, s:sub(2))
-            if ok2 and type(content) == "string" and #content > bestLen then
-                best, bestLen = content, #content
-            end
-        end
-    end
-    if best ~= nil then pcall(qf, best) end
-end
-
+-- queue_on_teleport runs in a fresh session, where the original loadstring
+-- source is not available. Use the same published loader as the entry point.
 local function fn40(arg, arg2, arg3)
+local marker = "kiciarebuild/rerun_after_teleport.txt"
+local url = "https://raw.githubusercontent.com/shammanpok3-cmyk/Kicia-Cracked-Updating-project./refs/heads/main/loader.lua"
+local read = K.fn("readfile")
+local write = K.fn("writefile")
+local synApi = getgenv().syn
+local queue = K.fn("queue_on_teleport") or K.fn("queueonteleport")
+    or (type(synApi) == "table" and synApi.queue_on_teleport)
+local queued = false
+local function setQueueEnabled(enabled)
+    if not write then
+        if enabled then warn("[Kicia] Re-run After Teleport requires writefile") end
+        return
+    end
+    local ok, err = pcall(write, marker, enabled and "1" or "0")
+    if not ok then
+        warn("[Kicia] Could not save teleport setting: " .. tostring(err))
+        return
+    end
+    if enabled and not queued then
+        if not read or type(queue) ~= "function" then
+            warn("[Kicia] Re-run After Teleport requires queue_on_teleport and readfile")
+            return
+        end
+        local payload = string.format([[local read = getgenv().readfile or readfile
+local ok, enabled = pcall(read, %q)
+if ok and enabled == "1" then
+    local loaded, err = pcall(function() loadstring(game:HttpGet(%q))() end)
+    if not loaded then warn("[Kicia] Teleport reload failed: " .. tostring(err)) end
+end]], marker, url)
+        local queuedOk, queueErr = pcall(queue, payload)
+        if queuedOk then queued = true else warn("[Kicia] Could not queue teleport reload: " .. tostring(queueErr)) end
+    end
+end
 local t = arg:AddToggle({ Label = "Re-run After Teleport", Config = arg3 })
-pcall(function() t:OnChanged(function(v) if v then KiciaQueueTeleport() end end) end)
-pcall(function()
-if arg2:GetConfig():Get(arg3) then KiciaQueueTeleport() end
-end)
+t:OnChanged(setQueueEnabled)
+setQueueEnabled(t.Value == true)
+K.onUnload(function() if write then pcall(write, marker, "0") end end)
 local stateData = arg2:GetStateData()
 
 arg:AddToggle({
@@ -60942,7 +60972,7 @@ return je.c
 end
 end
 do -- jf
-local function fn35()local I,W= tbl17 .bG(), tbl17 .aE(); tbl17 .hN();local N,P,a,e,c,E,p,T= tbl17 .h_(), tbl17 .ij(), tbl17 .ip(), tbl17 .n(), tbl17 .iw(), tbl17 .i_(), tbl17 .je(),cloneref(game:GetService("Players")).LocalPlayer;return function(l)if getgenv().KhForceMobileUi==true then W.ForceMobileLayout();end;local t=W.Menu.new({Icon=K.LithiumLogo,Title=string.format("KiciaHooker fixed by skidcoded | %s",tostring("Skidded Build")),Directory="kiciarebuild/rivals",Config=l.ReactiveStoreAdapter,ColorAnimation=l.ColorAnimation,Persistence=I,State=l.GeneralState,StateData=l.GeneralStateData,OnUnload=function()e:Destroy();end});e:Add(t);local I=l.PlayerIdentities;t:SetWatermarkUsername(I:GetPresented(T));e:Connect(I.IdentityChanged,function(W)if W==T then t:SetWatermarkUsername(I:GetPresented(T));end;end);P(l,t);E(l,t);c(l,t);N(l,t);p(l,t);a(l,t);t:AddSettingsTab();t:SetVisible(not(l.GeneralStateData.SilentLoad==true),true);end;end
+local function fn35()local I,W= tbl17 .bG(), tbl17 .aE(); tbl17 .hN();local N,P,a,e,c,E,p,T= tbl17 .h_(), tbl17 .ij(), tbl17 .ip(), tbl17 .n(), tbl17 .iw(), tbl17 .i_(), tbl17 .je(),cloneref(game:GetService("Players")).LocalPlayer;return function(l)if getgenv().KhForceMobileUi==true then W.ForceMobileLayout();end;local t=W.Menu.new({Icon=K.LithiumLogo,Title=string.format("KiciaHooker fixed by skidcoded | %s",tostring("Skidded Build")),Directory="kiciarebuild/rivals",Config=l.ReactiveStoreAdapter,ColorAnimation=l.ColorAnimation,Persistence=I,State=l.GeneralState,StateData=l.GeneralStateData,OnUnload=function()K.Unload();end});e:Add(t);local I=l.PlayerIdentities;t:SetWatermarkUsername(I:GetPresented(T));e:Connect(I.IdentityChanged,function(W)if W==T then t:SetWatermarkUsername(I:GetPresented(T));end;end);P(l,t);E(l,t);c(l,t);N(l,t);p(l,t);a(l,t);t:AddSettingsTab();t:SetVisible(not(l.GeneralStateData.SilentLoad==true),true);end;end
 
 tbl17.jf = function()
 local jf = tbl17.cache.jf
@@ -67026,17 +67056,10 @@ local bootFn = function()
     }
 end
 
-function K.Unload()
-    if K.destroyed then return end
-    K.destroyed = true
-    for _, f in ipairs(K.cleanups) do pcall(f) end
-    pcall(function() GlobalTrove:Destroy() end)
-    if getgenv().KiciaRebuild == K then getgenv().KiciaRebuild = nil end
-end
-
 -- (autoexec fix: game controller modules error when required before the
 -- game finishes replicating them, so wait for Controllers before booting)
-task.spawn(function()
+K.startupThread = task.spawn(function()
+local ok, err = pcall(function()
 local _players = game:GetService("Players")
 local _wt0 = os.clock()
 while not _players.LocalPlayer and os.clock() - _wt0 < 60 do task.wait() end
@@ -67079,7 +67102,12 @@ end
 if _spawnedOk and _uiOk then break end
 task.wait(1)
 end
+if K.destroyed then return end
+if os.clock() - _wt1 >= 45 then
+warn("[Kicia] Client readiness timed out; attempting startup anyway")
+else
 print("[Kicia] client alive, booting ...")
+end
 print("[Kicia] controllers ready, booting ...")
 print("[FIX] auto-exec/color picker by skidcoded")
 tbl17.j1()(bootFn())
@@ -67092,4 +67120,9 @@ print("[Kicia] please rejoin it broke lolz.")
 _ls.Enabled = false
 end
 end)
+end)
+if not ok then
+    warn("[Kicia] Startup failed: " .. tostring(err))
+    K.Unload()
+end
 end)
