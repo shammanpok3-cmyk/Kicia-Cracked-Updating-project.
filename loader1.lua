@@ -18085,7 +18085,7 @@ end
 
 local obj = setmetatable({
 _trove = v136,
-Title = arg.Title or "khook.lua",
+Title = arg.Title or "Kiciahook Leak | Rivals | Improved Build",
 Icon = arg.Icon or "rbxassetid://118838006164746",
 Directory = directory,
 ConfigVersion = arg.ConfigVersion or v86[63],
@@ -19503,6 +19503,7 @@ Options = { NotReloading = true, ScopedIn = v86[153] },
 Labels = { NotReloading = "Not Reloading", ScopedIn = "Scoped In" },
 },
 ActivationChance = 100,
+AutoFire = false,
 TargetConditions = {
 Options = {
 Visible = true,
@@ -53754,6 +53755,9 @@ local inner = arg._playerContext.Inner
 local silentAim = data.SilentAim
 local flag19 = inner ~= nil and inner.ItemBehaviors:EquippedItemAsGun() or nil
 arg:_UpdateTarget(arg2, flag19, silentAim)
+if silentAim.AutoFire and flag19 ~= nil and arg._active and arg._currentTarget ~= nil and arg._currentHitbox ~= nil then
+inner.FighterState:Input("StartShooting")
+end
 arg:_UpdateRender(arg2, flag19, silentAim)
 end
 
@@ -59451,7 +59455,7 @@ return h8.c
 end
 end
 do -- h9
-local function fn35() tbl17 .aF(); tbl17 .aE();local I,W,N,P,a= tbl17 .dX(), tbl17 .h5(), tbl17 .h6(), tbl17 .h3(), tbl17 .a7();local function l(e,c)N(e,"Enable Silent Aim",{"Always","Toggle","Hold"},{"SilentAim"},true);e:AddSlider({Label="Activation Chance (%)",Min=0,Max=100,Config={"SilentAim","ActivationChance"}});local N=c.ExpandActivationSection;if N~=nil then N(e);end;N=c.ActivationConditions;local c_147,E=N.Options,N.Labels;e:AddMultiDropdown({Label="Activation Rules",Options=P(c_147),Default=I(a(c_147)),Config={"SilentAim","ActivationConditions"},Labels=E});e:AddSlider({Label="Reaction Delay (s)",Min=0,Max=2,Step=0.01,Config={"SilentAim","ReactionTime"}});e:AddSlider({Label="Switch Delay (s)",Min=0,Max=2,Step=0.01,Config={"SilentAim","SwitchDelay"}});end;return function(I,N)local P=I:AddSection({Title="Activation",Side="left"});if N.PinHint~=nil then P:AddLabel({Label=N.PinHint});end;l(P,N);return W(I,"SilentAim",N);end;end
+local function fn35() tbl17 .aF(); tbl17 .aE();local I,W,N,P,a= tbl17 .dX(), tbl17 .h5(), tbl17 .h6(), tbl17 .h3(), tbl17 .a7();local function l(e,c)N(e,"Enable Silent Aim",{"Always","Toggle","Hold"},{"SilentAim"},true);e:AddToggle({Label="Auto Fire",Config={"SilentAim","AutoFire"}});e:AddSlider({Label="Activation Chance (%)",Min=0,Max=100,Config={"SilentAim","ActivationChance"}});local N=c.ExpandActivationSection;if N~=nil then N(e);end;N=c.ActivationConditions;local c_147,E=N.Options,N.Labels;e:AddMultiDropdown({Label="Activation Rules",Options=P(c_147),Default=I(a(c_147)),Config={"SilentAim","ActivationConditions"},Labels=E});e:AddSlider({Label="Reaction Delay (s)",Min=0,Max=2,Step=0.01,Config={"SilentAim","ReactionTime"}});e:AddSlider({Label="Switch Delay (s)",Min=0,Max=2,Step=0.01,Config={"SilentAim","SwitchDelay"}});end;return function(I,N)local P=I:AddSection({Title="Activation",Side="left"});if N.PinHint~=nil then P:AddLabel({Label=N.PinHint});end;l(P,N);return W(I,"SilentAim",N);end;end
 
 tbl17.h9 = function()
 local h9 = tbl17.cache.h9
@@ -61014,7 +61018,7 @@ return je.c
 end
 end
 do -- jf
-local function fn35()local I,W= tbl17 .bG(), tbl17 .aE(); tbl17 .hN();local N,P,a,e,c,E,p,T= tbl17 .h_(), tbl17 .ij(), tbl17 .ip(), tbl17 .n(), tbl17 .iw(), tbl17 .i_(), tbl17 .je(),cloneref(game:GetService("Players")).LocalPlayer;return function(l)if getgenv().KhForceMobileUi==true then W.ForceMobileLayout();end;local t=W.Menu.new({Icon=K.LithiumLogo,Title=string.format("Kiciahook Improvement | %s",tostring("Improved Build")),Directory="kiciarebuild/rivals",Config=l.ReactiveStoreAdapter,ColorAnimation=l.ColorAnimation,Persistence=I,State=l.GeneralState,StateData=l.GeneralStateData,OnUnload=function()K.Unload();end});e:Add(t);local I=l.PlayerIdentities;t:SetWatermarkUsername(I:GetPresented(T));e:Connect(I.IdentityChanged,function(W)if W==T then t:SetWatermarkUsername(I:GetPresented(T));end;end);P(l,t);E(l,t);c(l,t);N(l,t);p(l,t);a(l,t);t:AddSettingsTab();t:SetVisible(not(l.GeneralStateData.SilentLoad==true),true);end;end
+local function fn35()local I,W= tbl17 .bG(), tbl17 .aE(); tbl17 .hN();local N,P,a,e,c,E,p,T= tbl17 .h_(), tbl17 .ij(), tbl17 .ip(), tbl17 .n(), tbl17 .iw(), tbl17 .i_(), tbl17 .je(),cloneref(game:GetService("Players")).LocalPlayer;return function(l)if getgenv().KhForceMobileUi==true then W.ForceMobileLayout();end;local t=W.Menu.new({Icon=K.LithiumLogo,Title="Kiciahook Leak | Rivals | Improved Build",Directory="kiciarebuild/rivals",Config=l.ReactiveStoreAdapter,ColorAnimation=l.ColorAnimation,Persistence=I,State=l.GeneralState,StateData=l.GeneralStateData,OnUnload=function()K.Unload();end});e:Add(t);local I=l.PlayerIdentities;t:SetWatermarkUsername(I:GetPresented(T));e:Connect(I.IdentityChanged,function(W)if W==T then t:SetWatermarkUsername(I:GetPresented(T));end;end);P(l,t);E(l,t);c(l,t);N(l,t);p(l,t);a(l,t);t:AddSettingsTab();t:SetVisible(not(l.GeneralStateData.SilentLoad==true),true);end;end
 
 tbl17.jf = function()
 local jf = tbl17.cache.jf
