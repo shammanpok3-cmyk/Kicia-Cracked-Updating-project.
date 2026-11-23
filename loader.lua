@@ -1,4 +1,3 @@
--- Put this file in your executor autoexec folder.
 local __kiciaRagebotAttacking = false
 if not game:IsLoaded() then game.Loaded:Wait() end
 task.wait(1.2)
@@ -9,8 +8,6 @@ end
 local K: { [string]: any } = { connections = {}, cleanups = {}, destroyed = false }
 getgenv().KiciaRebuild = K
 
--- Claim this execution before waiting: another execution can cancel it while
--- Roblox is still loading, instead of allowing two bootstraps to race.
 function K.Unload()
     if K.destroyed then return end
     K.destroyed = true
